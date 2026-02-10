@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>IT Store – Computer & Technology Accessories</title>
+<style>
+body{margin:0;font-family:Segoe UI;background:#0f0f0f;color:#fff}
+header{background:linear-gradient(90deg,#c30000,#ff0000);padding:25px;text-align:center;font-size:28px;font-weight:bold}
+
+nav{
+  background:#111;
+  padding:15px;
+  display:flex;
+  justify-content:center;
+  gap:20px;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+nav button{
+  padding:12px 26px;
+  font-size:16px;
+  background:#ff3333;
+  color:#fff;
+  border:none;
+  border-radius:25px;
+  cursor:pointer;
+  box-shadow:0 0 10px #000;
+}
+nav button:hover{background:#ff6666}
+
+.container{padding:30px;margin-right:320px}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+
+.card{
+  background:#1c1c1c;
+  border-radius:15px;
+  padding:12px;
+  box-shadow:0 0 12px #000;
+  transition:.2s;
+}
+.card:hover{transform:scale(1.03)}
+
+.card img{width:100%;border-radius:10px;height:160px;object-fit:contain;background:#000}
+.card h3{margin:8px 0;font-size:15px}
+.card button{background:#ff3333;color:#fff;border:none;padding:8px;width:100%;border-radius:8px;cursor:pointer}
+
+#cart{
+  position:fixed;
+  top:0;
+  right:0;
+  width:300px;
+  background:#1a1a1a;
+  height:100%;
+  padding:15px;
+  overflow:auto;
+  border-left:2px solid #333;
+}
+
+input,select{width:100%;padding:8px;margin:6px 0;border-radius:6px;border:none}
+hr{border:1px solid #333}
+small{color:#aaa}
+</style>
+</head>
+<body>
+
+<header>🖥️ IT Store – Computer & Technology Accessories</header>
+
+<nav>
+<button onclick="show('shop')">🏠 หน้าร้าน</button>
+<button onclick="show('checkout')">💳 ชำระเงิน</button>
+<button onclick="show('admin')">🛠️ Admin</button>
+</nav>
+
+<div class="container" id="shop">
+<h2>📦 สินค้าทั้งหมด</h2>
+<select id="filter" onchange="renderProducts()">
+<option value="all">ทั้งหมด</option>
+<option value="RAM">RAM</option>
+<option value="CASE">Case</option>
+<option value="MONITOR">Monitor</option>
+<option value="CPU">CPU</option>
+<option value="PSU">Power Supply</option>
+</select>
+<div class="products" id="products"></div>
+</div>
+
+<div class="container" id="checkout" style="display:none">
+<h2>💳 ชำระเงิน</h2>
+<p>โอนเข้าบัญชี</p>
+<p>เลขที่บัญชี: <b>1846099167346</b></p>
+<p>ชื่อบัญชี: <b>นาง บุษบา อินต๊ะสาร</b></p>
+<select id="paymethod">
+<option>โอนเงิน</option>
+<option>เก็บเงินปลายทาง (COD)</option>
+</select>
+<button onclick="alert('สั่งซื้อเรียบร้อย!')">ยืนยันการสั่งซื้อ</button>
+</div>
+
+<div class="container" id="admin" style="display:none">
+<h2>🛠️ Admin - จัดการสินค้า</h2>
+<input id="aName" placeholder="ชื่อสินค้า">
+<input id="aPrice" type="number" placeholder="ราคา">
+<select id="aCat">
+<option>RAM</option><option>CASE</option><option>MONITOR</option><option>CPU</option><option>PSU</option>
+</select>
+<input id="aImg" placeholder="ลิงก์รูปภาพ (Imgur / GitHub raw)">
+<button onclick="addProduct()">เพิ่มสินค้า</button>
+<hr>
+<div id="adminList"></div>
+</div>
+
+<div id="cart">
+<h3>🛍️ ตะกร้าสินค้า</h3>
+<ul id="cartItems"></ul>
+<p id="total"></p>
+</div>
+
+<script>
+let products = [
+  // RAM
+  {cat:"RAM",name:"Kingston Fury Beast DDR4 16GB 3200MHz",price:1890,img:"https://i.imgur.com/4AiXzf8.jpeg"},
+  {cat:"RAM",name:"Corsair Vengeance LPX 8GB 3200MHz",price:1090,img:"https://i.imgur.com/DvpvklR.png"},
+  {cat:"RAM",name:"G.Skill Ripjaws V 16GB 3600MHz",price:2090,img:"https://i.imgur.com/1ZQ3a6S.png"},
+  {cat:"RAM",name:"ADATA XPG D60G 16GB RGB",price:2390,img:"https://i.imgur.com/fn5l5oB.png"},
+  {cat:"RAM",name:"Team T-Force Delta RGB 16GB",price:2290,img:"https://i.imgur.com/6o4s8pU.png"},
+  {cat:"RAM",name:"Crucial Ballistix 16GB",price:1990,img:"https://i.imgur.com/0sG4yYx.png"},
+  {cat:"RAM",name:"PNY XLR8 Gaming 16GB",price:1790,img:"https://i.imgur.com/j6s4p0J.png"},
+
+  // CASE
+  {cat:"CASE",name:"NZXT H510",price:2690,img:"https://i.imgur.com/6o5NQvT.png"},
+  {cat:"CASE",name:"Cooler Master MasterBox TD500",price:3190,img:"https://i.imgur.com/6KQkF3r.png"},
+  {cat:"CASE",name:"Corsair 4000D Airflow",price:3490,img:"https://i.imgur.com/wr7eWkU.png"},
+  {cat:"CASE",name:"Thermaltake V200 RGB",price:2190,img:"https://i.imgur.com/4G8z7Kk.png"},
+  {cat:"CASE",name:"Antec NX410",price:2390,img:"https://i.imgur.com/Lzv2g0x.png"},
+  {cat:"CASE",name:"MSI MAG Forge 100R",price:2590,img:"https://i.imgur.com/1q5s3aF.png"},
+  {cat:"CASE",name:"Phanteks P360A",price:2990,img:"https://i.imgur.com/0bJ0o4x.png"},
+
+  // MONITOR
+  {cat:"MONITOR",name:"LG 24MP400-B 24\" IPS",price:3790,img:"https://i.imgur.com/7x6G3oP.png"},
+  {cat:"MONITOR",name:"AOC 24G2E 144Hz",price:5290,img:"https://i.imgur.com/0Z8Yz1Q.png"},
+  {cat:"MONITOR",name:"Samsung Odyssey G3 24\"",price:5690,img:"https://i.imgur.com/2h0c2sG.png"},
+  {cat:"MONITOR",name:"ASUS TUF VG249Q1A",price:5990,img:"https://i.imgur.com/6Ew1r5P.png"},
+  {cat:"MONITOR",name:"Dell SE2422H",price:3990,img:"https://i.imgur.com/6Gk0H2G.png"},
+  {cat:"MONITOR",name:"MSI Optix G241",price:5490,img:"https://i.imgur.com/2N8yqQ0.png"},
+  {cat:"MONITOR",name:"ViewSonic XG2405",price:5790,img:"https://i.imgur.com/9c4m0Yf.png"},
+
+  // CPU
+  {cat:"CPU",name:"Intel Core i3-12100F",price:3890,img:"https://i.imgur.com/0ZxK0vO.png"},
+  {cat:"CPU",name:"Intel Core i5-12400F",price:5990,img:"https://i.imgur.com/l49aYS3.png"},
+  {cat:"CPU",name:"Intel Core i7-12700F",price:9890,img:"https://i.imgur.com/3nFqHn2.png"},
+  {cat:"CPU",name:"AMD Ryzen 5 5600",price:5290,img:"https://i.imgur.com/4b7JHc7.png"},
+  {cat:"CPU",name:"AMD Ryzen 7 5700X",price:8390,img:"https://i.imgur.com/tCw5o1F.png"},
+  {cat:"CPU",name:"AMD Ryzen 5 7600",price:7990,img:"https://i.imgur.com/Jyq9n9E.png"},
+  {cat:"CPU",name:"Intel Core i5-13400F",price:7090,img:"https://i.imgur.com/8zJ9b0g.png"},
+  {cat:"CPU",name:"Intel Core i9-12900KF",price:12990,img:"https://i.imgur.com/qc8Qk1H.png"},
+  {cat:"CPU",name:"AMD Ryzen 9 5900X",price:12990,img:"https://i.imgur.com/ZxQFZl0.png"},
+  {cat:"CPU",name:"AMD Ryzen 7 7800X3D",price:15990,img:"https://i.imgur.com/R0H8a9C.png"},
+
+  // PSU
+  {cat:"PSU",name:"Corsair CV650 650W",price:1890,img:"https://i.imgur.com/VqJw1Dn.png"},
+  {cat:"PSU",name:"Cooler Master MWE 650 Bronze",price:2090,img:"https://i.imgur.com/7lXbZ2Q.png"},
+  {cat:"PSU",name:"Seasonic S12III 650W",price:2390,img:"https://i.imgur.com/0m0QF0X.png"},
+  {cat:"PSU",name:"Thermaltake Smart BX1 650W",price:1990,img:"https://i.imgur.com/KmZ3f2y.png"},
+  {cat:"PSU",name:"Antec NeoECO 650W",price:2190,img:"https://i.imgur.com/0H5kE2o.png"},
+  {cat:"PSU",name:"MSI MPG A650GF",price:2890,img:"https://i.imgur.com/2J8s1dK.png"},
+  {cat:"PSU",name:"EVGA 650 GQ",price:2590,img:"https://i.imgur.com/s1vYx6D.png"}
+];
+
+let cart=[];
+
+function renderProducts(){
+  let f=document.getElementById("filter").value;
+  let div=document.getElementById("products"); 
+  div.innerHTML="";
+  products.filter(p=>f==="all"||p.cat===f).forEach((p,i)=>{
+    div.innerHTML+=`
+      <div class="card">
+        <img src="${p.img}" alt="${p.name}">
+        <h3>${p.name}</h3>
+        <small>${p.cat}</small>
+        <p>${p.price.toLocaleString()} บาท</p>
+        <button onclick="addCart(${i})">เพิ่มลงตะกร้า</button>
+      </div>`;
+  });
+  renderAdmin();
+}
+
+function addCart(i){cart.push(products[i]);renderCart();}
+
+function renderCart(){
+  let ul=document.getElementById("cartItems"); 
+  ul.innerHTML="";
+  let total=0;
+  cart.forEach(p=>{
+    ul.innerHTML+=`<li>${p.name} - ${p.price.toLocaleString()} บาท</li>`;
+    total+=p.price;
+  });
+  document.getElementById("total").innerText="รวม: "+total.toLocaleString()+" บาท";
+}
+
+function show(id){
+  ["shop","checkout","admin"].forEach(s=>document.getElementById(s).style.display="none");
+  document.getElementById(id).style.display="block";
+}
+
+function addProduct(){
+  if(!aName.value||!aPrice.value||!aCat.value) return alert("กรอกข้อมูลให้ครบก่อนนะ");
+  products.push({name:aName.value,price:+aPrice.value,cat:aCat.value,img:aImg.value||"https://i.imgur.com/4AiXzf8.jpeg"});
+  aName.value="";aPrice.value="";aImg.value="";
+  renderProducts();
+}
+
+function renderAdmin(){
+  let d=document.getElementById("adminList"); 
+  d.innerHTML="";
+  products.forEach((p,i)=>{
+    d.innerHTML+=`<p>${p.name} - ${p.price.toLocaleString()} บาท <button onclick="del(${i})">ลบ</button></p>`;
+  });
+}
+
+function del(i){products.splice(i,1);renderProducts();}
+renderProducts();
+</script>
+
+</body>
+</html>
